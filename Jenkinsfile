@@ -3,7 +3,7 @@ def BRANCH         = "main"
 def REPO_URL       = "https://github.com/abimsyaefulloh/fe-dumbmerch.git"
 def SERVER         = "Abim22@103.196.152.65"          // AppServer (FE)
 def CREDENTIALS_ID = "finaltask"                      // Jenkins Credentials ID (SSH)
-def REMOTE_DIR     = "/opt/fe-dumbmerch"
+def REMOTE_DIR     = "/home/Abim22/fe-dumbmerch"
 def IMAGE_NAME     = "fe-dumbmerch-staging"
 def CONTAINER_NAME = "fe-dumbmerch-staging"
 def HOST_PORT      = "3002"                           // sesuai nginx staging
@@ -26,7 +26,7 @@ pipeline {
                 git -C ${REMOTE_DIR} checkout ${BRANCH}
                 git -C ${REMOTE_DIR} reset --hard origin/${BRANCH}
               else
-                rm -rf ${REMOTE_DIR}/*
+                rm -rf ${REMOTE_DIR}
                 git clone -b ${BRANCH} ${REPO_URL} ${REMOTE_DIR}
               fi
             '
@@ -79,3 +79,4 @@ pipeline {
     }
   }
 }
+
