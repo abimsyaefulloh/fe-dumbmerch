@@ -1,20 +1,22 @@
-// === FE PRODUCTION (tanpa clone di server) ===
-def branch     = "production"
-def server     = "Abim22@103.196.152.65"
-def cred       = "finaltask"
+// === FE PRODUCTION (tanpa clone di server, pakai HOME) ===
+def branch     = "production"                       // ganti ke "main" kalau branch utamamu main
+def server     = "Abim22@103.196.152.65"            // AppServer (FE)
+def cred       = "finaltask"                        // Jenkins SSH Credentials ID
 
-def directory  = "/opt/fe-dumbmerch-prod"      // beda folder dari staging
-def image      = "fe-dumbmerch-prod"           // beda nama image
-def container  = "fe-dumbmerch-prod"           // beda nama container
-def host_port  = "3000"                         // host port PROD
-def app_port   = "3000"                         // port di dalam container
+def directory  = "/home/Abim22/fe-dumbmerch-prod"   // folder KHUSUS prod (beda dari staging)
+def image      = "fe-dumbmerch-prod"                // nama image prod
+def container  = "fe-dumbmerch-prod"                // nama container prod
+def host_port  = "3000"                             
+def app_port   = "3000"                             // port di dalam container FE
 
 pipeline {
   agent any
   options { timestamps() }
 
   stages {
-    stage('Checkout (SCM)') { steps { checkout scm } }
+    stage('Checkout (SCM)') {
+      steps { checkout scm }
+    }
 
     stage('Sync workspace → server') {
       steps {
@@ -22,6 +24,7 @@ pipeline {
           sh """
             set -e
             ssh -o StrictHostKeyChecking=no ${server} 'mkdir -p ${directory}'
+            # kirim source dari Jenkins workspace (tanpa .git & node_modules)
             tar --exclude='.git' --exclude='node_modules' -C "${WORKSPACE}" -cf - . | \
               ssh -o StrictHostKeyChecking=no ${server} 'tar -C ${directory} -xf -'
           """
