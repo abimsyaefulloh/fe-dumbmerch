@@ -1,20 +1,22 @@
-// === FE STAGING (tanpa clone di server) ===
+// === FE STAGING (tanpa clone di server, pakai HOME) ===
 def branch     = "staging"
-def server     = "Abim22@103.196.152.65"       // AppServer (FE)
-def cred       = "finaltask"                   // Jenkins SSH Credentials ID
+def server     = "Abim22@103.196.152.65"          // AppServer (FE)
+def cred       = "finaltask"                      // Jenkins SSH Credentials ID
 
-def directory  = "/opt/fe-dumbmerch-staging"   // pisah dari prod
+def directory  = "/home/Abim22/fe-dumbmerch-staging"  // <= HOME (tidak perlu sudo)
 def image      = "fe-dumbmerch-staging"
 def container  = "fe-dumbmerch-staging"
-def host_port  = "3002"                        // host port STAGING
-def app_port   = "3000"                        // port di dalam container (ubah ke 5173 jika Vite dev)
+def host_port  = "3002"                           // host port STAGING
+def app_port   = "3000"                           // port di dalam container (ubah ke 5173 kalau Vite dev)
 
 pipeline {
   agent any
   options { timestamps() }
 
   stages {
-    stage('Checkout (SCM)') { steps { checkout scm } }
+    stage('Checkout (SCM)') {
+      steps { checkout scm }
+    }
 
     stage('Sync workspace → server') {
       steps {
