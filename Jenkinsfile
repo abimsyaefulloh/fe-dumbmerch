@@ -1,5 +1,5 @@
 // === FE STAGING ===
-def BRANCH         = "staging"
+def BRANCH         = "production"
 def REPO_URL       = "https://github.com/abimsyaefulloh/fe-dumbmerch.git"
 def SERVER         = "Abim22@103.196.152.65"          // AppServer (FE)
 def CREDENTIALS_ID = "finaltask"                      // Jenkins Credentials ID (SSH)
@@ -91,4 +91,5 @@ pipeline {
     }
   }
 }
+
 
