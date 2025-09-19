@@ -1,89 +1,75 @@
-// === FE STAGING ===
-def BRANCH         = "production"
-def REPO_URL       = "https://github.com/abimsyaefulloh/fe-dumbmerch.git"
-def SERVER         = "Abim22@103.196.152.65"          // AppServer (FE)
-def CREDENTIALS_ID = "finaltask"                      // Jenkins Credentials ID (SSH)
-def REMOTE_DIR     = "/home/Abim22/fe-dumbmerch"      // pakai folder home, akses full
-def IMAGE_NAME     = "fe-dumbmerch-staging"
-def CONTAINER_NAME = "fe-dumbmerch-staging"
-def HOST_PORT      = "3002"                           // sesuai nginx staging
-def APP_PORT       = "3000"                           // port dalam container FE (ubah ke 5173 kalau Vite)
+// === FE PRODUCTION (tanpa clone di server) ===
+def branch     = "production"
+def server     = "Abim22@103.196.152.65"
+def cred       = "finaltask"
+
+def directory  = "/opt/fe-dumbmerch-prod"      // beda folder dari staging
+def image      = "fe-dumbmerch-prod"           // beda nama image
+def container  = "fe-dumbmerch-prod"           // beda nama container
+def host_port  = "3000"                         // host port PROD
+def app_port   = "3000"                         // port di dalam container
 
 pipeline {
   agent any
   options { timestamps() }
 
   stages {
-    stage('Clone/Pull repo di server') {
+    stage('Checkout (SCM)') { steps { checkout scm } }
+
+    stage('Sync workspace → server') {
       steps {
-        sshagent([CREDENTIALS_ID]) {
+        sshagent([cred]) {
           sh """
-            ssh -o StrictHostKeyChecking=no ${SERVER} '
-              set -euo pipefail
-              mkdir -p ${REMOTE_DIR}
-              if git -C ${REMOTE_DIR} rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-                git -C ${REMOTE_DIR} fetch origin ${BRANCH}
-                git -C ${REMOTE_DIR} checkout -f ${BRANCH}
-                git -C ${REMOTE_DIR} reset --hard origin/${BRANCH}
-              else
-                rm -rf ${REMOTE_DIR}
-                git clone -b ${BRANCH} ${REPO_URL} ${REMOTE_DIR}
-              fi
+            set -e
+            ssh -o StrictHostKeyChecking=no ${server} 'mkdir -p ${directory}'
+            tar --exclude='.git' --exclude='node_modules' -C "${WORKSPACE}" -cf - . | \
+              ssh -o StrictHostKeyChecking=no ${server} 'tar -C ${directory} -xf -'
+          """
+        }
+      }
+    }
+
+    stage('Build image FE (prod)') {
+      steps {
+        sshagent([cred]) {
+          sh """
+            ssh -o StrictHostKeyChecking=no ${server} '
+              set -e
+              cd ${directory}
+              docker build -t ${image}:${branch} .
+              docker tag  ${image}:${branch} ${image}:latest
             '
           """
         }
       }
     }
 
-    stage('Build image FE') {
+    stage('Run/Restart container FE (prod)') {
       steps {
-        sshagent([CREDENTIALS_ID]) {
+        sshagent([cred]) {
           sh """
-            ssh -o StrictHostKeyChecking=no ${SERVER} '
-              set -euo pipefail
-              cd ${REMOTE_DIR}
-              docker build -t ${IMAGE_NAME} .
-            '
-          """
-        }
-      }
-    }
-
-    stage('Run/Restart container FE (staging)') {
-      steps {
-        sshagent([CREDENTIALS_ID]) {
-          sh """
-            ssh -o StrictHostKeyChecking=no ${SERVER} '
-              set -euo pipefail
-              docker rm -f ${CONTAINER_NAME} || true
-              docker run -d --name ${CONTAINER_NAME} \\
-                --restart unless-stopped \\
+            ssh -o StrictHostKeyChecking=no ${server} '
+              set -e
+              docker rm -f ${container} >/dev/null 2>&1 || true
+              docker run -d --name ${container} \\
                 -e HOST=0.0.0.0 \\
-                -e PORT=${APP_PORT} \\
-                -p ${HOST_PORT}:${APP_PORT} \\
-                ${IMAGE_NAME}
+                -e PORT=${app_port} \\
+                -p ${host_port}:${app_port} \\
+                --restart unless-stopped \\
+                ${image}:${branch}
             '
           """
         }
       }
     }
 
-    stage('Smoke test FE') {
+    stage('Smoke test') {
       steps {
-        sshagent([CREDENTIALS_ID]) {
+        sshagent([cred]) {
           sh """
-            ssh -o StrictHostKeyChecking=no ${SERVER} '
-              set -euo pipefail
-              echo "Waiting for FE to be ready on port ${HOST_PORT} ..."
-              for i in {1..30}; do
-                if curl -sSf http://127.0.0.1:${HOST_PORT}/ >/dev/null; then
-                  echo "FE is UP"; exit 0
-                fi
-                sleep 2
-              done
-              echo "FE did not respond in time. Last 200 lines of container logs:"
-              docker logs ${CONTAINER_NAME} | tail -n 200
-              exit 1
+            ssh -o StrictHostKeyChecking=no ${server} '
+              set -e
+              curl -fsS -I http://127.0.0.1:${host_port} | head -n1
             '
           """
         }
@@ -91,5 +77,3 @@ pipeline {
     }
   }
 }
-
-
