@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create base URL API
 export const API = axios.create({
-  baseURL: "https://api.abimft.studentdumbways.my.id/api/v1"
+  baseURL: "https://api.abim.studentdumbways.my.id/api/v1"
 });
 
 // Set Authorization Token Header
