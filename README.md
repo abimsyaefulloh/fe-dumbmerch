@@ -1,4 +1,4 @@
-# 🛍️ Dumbmerch Backend
+# 🛍️ Dumbmerch Frontend
 
 Frontend aplikasi **Dumbmerch**, dikembangkan sebagai project bootcamp **Dumbways Indonesia**.  
 Repo ini berisi UI untuk e-commerce sederhana yang terhubung dengan backend Dumbmerch.
